@@ -1,0 +1,85 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - dev
+      - qa
+      - prod
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Tests
+        run: npm test --if-present
+
+      - name: Build Application
+        run: npm run build --if-present
+
+  deploy-dev:
+    if: github.ref == 'refs/heads/dev'
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to DEV
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEV_HOST }}
+          username: ${{ secrets.DEV_USER }}
+          key: ${{ secrets.DEV_SSH_KEY }}
+          script: |
+            cd /home/sourav/form-app
+            git pull origin dev
+            npm install
+            pm2 restart form-app
+
+  deploy-qa:
+    if: github.ref == 'refs/heads/qa'
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to QA
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.QA_HOST }}
+          username: ${{ secrets.QA_USER }}
+          key: ${{ secrets.QA_SSH_KEY }}
+          script: |
+            cd /home/sourav/form-app
+            git pull origin qa
+            npm install
+            pm2 restart form-app
+
+  deploy-prod:
+    if: github.ref == 'refs/heads/prod'
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to PROD
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            cd /home/sourav/form-app
+            git pull origin prod
+            npm install
+            pm2 restart form-app
