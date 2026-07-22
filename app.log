@@ -1,0 +1,4 @@
+nohup: ignoring input
+◇ injected env (2) from .env // tip: ⌘ enable debugging { debug: true }
+Server Running on Port 3000
+✅ MongoDB Connected
