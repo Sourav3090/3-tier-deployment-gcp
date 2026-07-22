@@ -8,46 +8,70 @@ on:
       - prod
 
 jobs:
+
   build:
+    name: Build Application
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Source Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: "20"
 
       - name: Install Dependencies
         run: npm install
 
       - name: Skip Tests
-        run: echo "No tests configured"
+        run: echo "No Tests Configured"
 
-      - name: Build Application
-        run: echo "Build Completed"
+      - name: Build
+        run: echo "Build Successful"
+
 
   deploy-dev:
-    name: Deploy to Development
+    name: Deploy to DEV
     needs: build
     if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to Dev Server
+      - name: Deploy Application to DEV
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.DEV_HOST }}
           username: ${{ secrets.DEV_USER }}
           key: ${{ secrets.DEV_SSH_KEY }}
+          port: 22
+
+          timeout: 30s
+          command_timeout: 15m
+          script_stop: true
+          debug: true
+
           script: |
+            echo "========== DEV =========="
+            whoami
+            hostname
+            pwd
+
             cd /home/sourav/form-app
+
+            git fetch --all
             git checkout dev
             git pull origin dev
+
             npm install
-            pm2 restart form-app
+
+            pm2 restart form-app || pm2 start server.js --name form-app
+
+            pm2 save
+
+            echo "========== DEV Deployment Successful =========="
+
 
   deploy-qa:
     name: Deploy to QA
@@ -56,35 +80,70 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to QA Server
+      - name: Deploy Application to QA
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.QA_HOST }}
           username: ${{ secrets.QA_USER }}
           key: ${{ secrets.QA_SSH_KEY }}
+          port: 22
+
+          timeout: 30s
+          command_timeout: 15m
+          script_stop: true
+          debug: true
+
           script: |
+            echo "========== QA =========="
+
             cd /home/sourav/form-app
+
+            git fetch --all
             git checkout qa
             git pull origin qa
+
             npm install
-            pm2 restart form-app
+
+            pm2 restart form-app || pm2 start server.js --name form-app
+
+            pm2 save
+
+            echo "========== QA Deployment Successful =========="
+
 
   deploy-prod:
-    name: Deploy to Production
+    name: Deploy to PROD
     needs: build
     if: github.ref == 'refs/heads/prod'
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to Production Server
+      - name: Deploy Application to PROD
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.PROD_HOST }}
           username: ${{ secrets.PROD_USER }}
           key: ${{ secrets.PROD_SSH_KEY }}
+          port: 22
+
+          timeout: 30s
+          command_timeout: 15m
+          script_stop: true
+          debug: true
+
           script: |
+            echo "========== PROD =========="
+
             cd /home/sourav/form-app
+
+            git fetch --all
             git checkout prod
             git pull origin prod
+
             npm install
-            pm2 restart form-app
+
+            pm2 restart form-app || pm2 start server.js --name form-app
+
+            pm2 save
+
+            echo "========== PROD Deployment Successful =========="
