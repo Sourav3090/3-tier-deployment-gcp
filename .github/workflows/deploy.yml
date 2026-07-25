@@ -110,7 +110,6 @@ jobs:
 
             echo "========== QA Deployment Successful =========="
 
-
   deploy-prod:
     name: Deploy to PROD
     needs: build
@@ -118,7 +117,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy Application to PROD
+      - name: Deploy PROD
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.PROD_HOST }}
@@ -134,7 +133,7 @@ jobs:
           script: |
             echo "========== PROD =========="
 
-            cd /home/sourav/form-app
+            cd /home/sourav/3-tier-deployment-gcp
 
             git fetch --all
             git checkout prod
@@ -142,8 +141,10 @@ jobs:
 
             npm install
 
-            pm2 restart form-app || pm2 start server.js --name form-app
+            pm2 restart form-app --update-env || pm2 start server.js --name form-app
 
             pm2 save
+
+            pm2 status
 
             echo "========== PROD Deployment Successful =========="
